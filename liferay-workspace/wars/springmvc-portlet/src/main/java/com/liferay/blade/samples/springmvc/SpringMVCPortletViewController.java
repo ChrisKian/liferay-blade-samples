@@ -21,6 +21,11 @@ import com.liferay.blade.samples.servicebuilder.service.FooLocalServiceUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.transaction.Isolation;
+import com.liferay.portal.kernel.transaction.Propagation;
+import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 
@@ -36,6 +41,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.portlet.bind.annotation.ActionMapping;
 import org.springframework.web.portlet.bind.annotation.RenderMapping;
+import com.liferay.portal.spring.extender.service.ServiceReference;
 
 /**
  * Provides the Spring MVC portlet view controller class.
@@ -44,8 +50,26 @@ import org.springframework.web.portlet.bind.annotation.RenderMapping;
  */
 @Controller
 @RequestMapping("VIEW")
+@Transactional(rollbackFor = Exception.class)
 public class SpringMVCPortletViewController {
 
+	@RenderMapping(params = "action=testingFoo")
+	@Transactional(rollbackFor = Exception.class)
+	public void testingFoo(RenderRequest request, RenderResponse response)
+		throws Exception {
+
+		userLocalService.addUser(
+			0, CompanyThreadLocal.getCompanyId(), true, null, null, true,
+			"testScreenName", "testEmail@test.com", 0, null,
+			java.util.Locale.getDefault(), "firstName", null, "lastName", 0, 0,
+			true, 1, 1, 1990,	null, null, null, null, null, false, null);
+
+		error();
+	}
+
+	private void error() throws Exception {
+		throw new Exception();
+	}
 	/**
 	 * Handles the view when the action is <code>addFoo</code>.
 	 *
@@ -203,6 +227,9 @@ public class SpringMVCPortletViewController {
 	public String view2(RenderRequest request, RenderResponse response) {
 		return "view";
 	}
+
+	@ServiceReference(type = UserLocalService.class)
+	protected UserLocalService userLocalService;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		SpringMVCPortletViewController.class);
